@@ -11,56 +11,65 @@ namespace dsa {
 
 template <typename T>
 class SparseGraph {
-  struct Vertex;
+  struct Vertex;  // forward declaration
  public:
+  using index = size_t;
   SparseGraph() = default;
   SparseGraph(const SparseGraph&) = default;
-  SparseGraph(SparseGraph&&);
+  SparseGraph(SparseGraph&&);  // TODO(implement)
+  SparseGraph& operator=(const SparseGraph&) = default;
+  SparseGraph& operator=(SparseGraph&&); // TODO(implement)
   ~SparseGraph() = default;
 
-  void AddVertex(T& val); //O(1)
-  bool VertexExists(T& val); // O(1)
-  void AddNeighbor(T& source, T& destination); // O(1)
-  void RemoveNeighbor(T& source, T& destination); // O(E/V)
-  std::vector<T> GetNeighbors(T& val); // O(E/V)
-  bool EdgeExists(T& source, T& destination); // O(E/V)
+  void AddVertex(const T& val); // O(1)
+  bool VertexExists(const T& val) const ; // O(1)
+  void AddNeighbor(const T& source, const T& destination); // O(1)
+  void AddNeighbor(const std::pair<T, T>& src_and_dest); // TODO(implement)
+  void RemoveNeighbor(const T& source, const T& destination); // O(E/V)
+  void RemoveNeighbor(const std::pair<T, T>& src_and_dest); // TODO(implement)
+  std::vector<T> GetNeighbors(const T& val) const; // O(E/V)
+  bool EdgeExists(const T& source, const T& destination) const; // O(E/V)
  private:
   std::vector<Vertex> graph_;
-  std::unordered_map<T, Vertex> map_;
+  std::unordered_map<T, index> map_;
   struct Vertex {
+      friend SparseGraph; // not entirely sure if this is needed
+      Vertex() = default;
       Vertex(const T& val): value_(val) {};
       T value_;
-      std::vector<size_t> neighbors_;
+      std::vector<index> neighbors_;
    };
 };
 
 template <typename T>
-void SparseGraph<T>::AddVertex(T& val) {
+inline void SparseGraph<T>::AddVertex(const T& val) {
    map_.insert(std::make_pair(val, std::size(graph_)));
-   graph_.emplace_back(val);
+   graph_.push_back(val);
 }
 
 template <typename T>
-bool SparseGraph<T>::VertexExists(T& val) {
+inline bool SparseGraph<T>::VertexExists(const T& val) const {
    return map_.find(val) != std::end(map_);
 }
 
 template <typename T>
-void SparseGraph<T>::AddNeighbor(T &source, T &destination) {
-   size_t src_idx = map_[source], dest_idx = map_[destination];
+inline void SparseGraph<T>::AddNeighbor(const T &source, const T &destination) {
+   index src_idx = map_[source];
+   index dest_idx = map_[destination];
    graph_[src_idx].push_back(dest_idx);
 }
 
 template <typename T>
-void SparseGraph<T>::RemoveNeighbor(T &source, T &destination) {
+inline void SparseGraph<T>::RemoveNeighbor(const T &source, 
+                                           const T &destination) {
   auto& neighbors = graph_[map_[source]].neighbors;
   neighbors.erase(std::find(std::begin(neighbors), 
                   std::end(neighbors), map_[destination]));
 }
 
 template <typename T>
-std::vector<T> SparseGraph<T>::GetNeighbors(T& val){
-   auto& neighbors = graph_[map_[val]].neighbors;
+inline std::vector<T> SparseGraph<T>::GetNeighbors(const T& val) const {
+   const auto& neighbors = graph_[map_[val]].neighbors;
    std::vector<T> tmp;
    tmp.reserve(std::size(neighbors));
    for (auto& neighbor: neighbors) {
@@ -70,8 +79,9 @@ std::vector<T> SparseGraph<T>::GetNeighbors(T& val){
 }
 
 template <typename T>
-bool SparseGraph<T>::EdgeExists(T& source, T& destination){
-   auto& neighbors = graph_[map_[source]].neighbors;
+inline bool SparseGraph<T>::EdgeExists(const T& source, 
+                                       const T& destination) const {
+   const auto& neighbors = graph_[map_[source]].neighbors;
    return std::find(std::begin(neighbors), 
                     std::end(neighbors), map_[destination]) 
                     != std::end(neighbors);
@@ -79,6 +89,4 @@ bool SparseGraph<T>::EdgeExists(T& source, T& destination){
 
 }  // namespace dsa
 
-
-
-#endif  // SPARSE_GRAPH_H
+#endif  // SPARSE_GRAPH_H_
